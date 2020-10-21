@@ -16,17 +16,18 @@ run=java $(class_flag)
 
 
 # *** Testing ***
-test_class_flag=-cp "target/classes/:target/test-classes:src/test/resources:target/junit-4.13.jar:target/testlib/hamcrest-core-1.3.jar:target/testlib/mockito-all-1.10.19.jar"
+test_class_flag=-cp "target/classes/:target/test-classes:src/test/resources:target/testlib/junit-4.13.jar:target/testlib/hamcrest-core-1.3.jar:target/testlib/mockito-all-1.10.19.jar"
 compile_test=javac $(test_class_flag) -d target/test-classes/
 run_test=java $(test_class_flag) org.junit.runner.JUnitCore
 
 test_eserver: compile_test_eserver
+	@$(run_test) test.eserver.EmailConnectionTest
 
 
 
 # *** Compilation ***
 compile_test_eserver: compile_eserver src/test/eserver/*.java
-	@$(compile_test) $?
+	@$(compile_test) src/test/eserver/*.java
 
 compile_eserver: src/main/eserver/*.java
 	@$(compile) $?
