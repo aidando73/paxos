@@ -50,15 +50,17 @@ public class EmailConnectionTest {
         
         connection.send("message sent");
 
-        assertEquals(getLine(socket), "message sent");
+        BufferedReader reader = getReader(socket);
+
+        assertEquals(reader.readLine(), "message sent");
     }
 
     @Test
     public void sendsEmailToAnotherConnection() throws IOException, InterruptedException {
         ServerSocket server = new ServerSocket(0);
 
-        Socket socket1 = sendData("localhost", server.getLocalPort(), "1\n2:PassedOnMessage\n");
-        Socket socket2 = sendData("localhost", server.getLocalPort(), "2\n1:PassedOnMessage\n");
+        Socket socket1 = sendData("localhost", server.getLocalPort(), "1\n2:PassedOnMessage\n2:noiceMessage\n");
+        Socket socket2 = sendData("localhost", server.getLocalPort(), "2\n1:PassedOnMessage\n1:secondMessage\n");
 
         ConcurrentMap<Integer, EmailConnection> emailRegistry = new ConcurrentHashMap<Integer, EmailConnection>();
         
@@ -70,8 +72,13 @@ public class EmailConnectionTest {
             Thread.sleep(1000);
         }
 
-        assertEquals(getLine(socket1), "1:PassedOnMessage");
-        assertEquals(getLine(socket2), "2:PassedOnMessage");
+        BufferedReader reader1 = getReader(socket1);
+        BufferedReader reader2 = getReader(socket2);
+
+        assertEquals(reader1.readLine(), "1:PassedOnMessage");
+        assertEquals(reader1.readLine(), "1:secondMessage");
+        assertEquals(reader2.readLine(), "2:PassedOnMessage");
+        assertEquals(reader2.readLine(), "2:noiceMessage");
     }
 
     //Creates a Socket that sends data to a specific url
@@ -126,13 +133,12 @@ public class EmailConnectionTest {
         }
     };
 
-    private String getLine(Socket socket) throws IOException {
-        BufferedReader reader = new BufferedReader(
+    private BufferedReader getReader(Socket socket) throws IOException {
+        return new BufferedReader(
             new InputStreamReader(
                     socket.getInputStream()
                 )
             );
         
-        return reader.readLine();
     }
 }

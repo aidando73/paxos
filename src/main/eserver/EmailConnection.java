@@ -25,10 +25,9 @@ public class EmailConnection {
 
     
     public synchronized void send(String message) {
-        synchronized(writer) {
-            writer.println(message);
-            writer.flush();
-        }
+        writer.println(message);
+        writer.flush();
+        System.out.println("sent " + message);
     }
 
 

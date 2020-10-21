@@ -21,6 +21,7 @@ compile_test=javac $(test_class_flag) -d target/test-classes/
 run_test=java $(test_class_flag) org.junit.runner.JUnitCore
 
 test_eserver: compile_test_eserver
+	@$(run_test) test.eserver.EmailServerTest
 	@$(run_test) test.eserver.EmailConnectionTest
 
 
