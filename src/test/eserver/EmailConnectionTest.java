@@ -27,7 +27,7 @@ public class EmailConnectionTest {
     public void assignsItselfToEmailRegistry() throws IOException, InterruptedException {
         ServerSocket server = new ServerSocket(0);
 
-        sendData("localhost", server.getLocalPort(), "1\ntewstinlskjg\ntesting\nnewline\n");
+        sendData("localhost", server.getLocalPort(), "1\n1:tewstinlskjg\n1:testing\n1:newline\n");
 
         ConcurrentMap<Integer, EmailConnection> emailRegistry = new ConcurrentHashMap<Integer, EmailConnection>();
         
@@ -59,26 +59,26 @@ public class EmailConnectionTest {
     public void sendsEmailToAnotherConnection() throws IOException, InterruptedException {
         ServerSocket server = new ServerSocket(0);
 
-        Socket socket1 = sendData("localhost", server.getLocalPort(), "1\n2:PassedOnMessage\n2:noiceMessage\n");
-        Socket socket2 = sendData("localhost", server.getLocalPort(), "2\n1:PassedOnMessage\n1:secondMessage\n");
 
         ConcurrentMap<Integer, EmailConnection> emailRegistry = new ConcurrentHashMap<Integer, EmailConnection>();
         
+        Socket socket1 = sendData("localhost", server.getLocalPort(), "29\n");
         EmailConnection connection1 = new EmailConnection(server.accept(), emailRegistry);
-        EmailConnection connection2 = new EmailConnection(server.accept(), emailRegistry);
 
-        //Wait for an update to email registries
-        while (emailRegistry.size() < 2) {
+        //Wait for an update to email registry 1
+        while (emailRegistry.size() < 1) {
             Thread.sleep(1000);
         }
+
+        Socket socket2 = sendData("localhost", server.getLocalPort(), "2\n29:PassedOnMessage\n29:secondMessage\n");
+        EmailConnection connection2 = new EmailConnection(server.accept(), emailRegistry);
+
 
         BufferedReader reader1 = getReader(socket1);
         BufferedReader reader2 = getReader(socket2);
 
-        assertEquals(reader1.readLine(), "1:PassedOnMessage");
-        assertEquals(reader1.readLine(), "1:secondMessage");
-        assertEquals(reader2.readLine(), "2:PassedOnMessage");
-        assertEquals(reader2.readLine(), "2:noiceMessage");
+        assertEquals(reader1.readLine(), "29:PassedOnMessage");
+        assertEquals(reader1.readLine(), "29:secondMessage");
     }
 
     //Creates a Socket that sends data to a specific url
