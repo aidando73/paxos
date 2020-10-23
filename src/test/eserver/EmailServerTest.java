@@ -11,6 +11,7 @@ import java.io.*;
 
 /**
  * EmailServerTest
+ * Tests for email server
  */
 public class EmailServerTest {
 

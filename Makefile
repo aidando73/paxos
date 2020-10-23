@@ -24,11 +24,19 @@ test_eserver: compile_test_eserver
 	@$(run_test) test.eserver.EmailServerTest
 	@$(run_test) test.eserver.EmailConnectionTest
 
+test_eclient: compile_test_eclient
+	@$(run_test) test.eclient.EmailClientTest
 
 
 # *** Compilation ***
 compile_test_eserver: compile_eserver src/test/eserver/*.java
 	@$(compile_test) src/test/eserver/*.java
 
+compile_test_eclient: compile_eclient src/test/eclient/*.java
+	@$(compile_test) src/test/eclient/*.java
+
 compile_eserver: src/main/eserver/*.java
+	@$(compile) $?
+
+compile_eclient: src/main/eclient/*.java
 	@$(compile) $?
