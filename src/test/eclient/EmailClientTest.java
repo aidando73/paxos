@@ -11,7 +11,7 @@ import java.io.*;
 
 /**
  * EmailClientTest
- * Tests for email client
+ * Unit tests for email client
  */
 public class EmailClientTest {
 
@@ -70,6 +70,7 @@ public class EmailClientTest {
         
         assertEquals(response, "test-message");
     }
+
 
     private BufferedReader getReader(Socket connection) throws IOException {
         return new BufferedReader(

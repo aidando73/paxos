@@ -18,7 +18,7 @@ public class EmailServerTest {
     @Test
     public void canConnectOneClient() throws IOException, InterruptedException {
         int port = getAvailablePort();
-        startServer(port);
+        new Thread(new EmailServer(port)).start();
 
         Socket connection = getConnection(port);
         BufferedReader reader = getReader(connection);
@@ -32,7 +32,7 @@ public class EmailServerTest {
     @Test
     public void canConnectThreeClients() throws IOException, InterruptedException {
         int port = getAvailablePort();
-        startServer(port);
+        new Thread(new EmailServer(port)).start();
 
         Socket c1 = getConnection(port);
         BufferedReader r1 = getReader(c1);
@@ -70,15 +70,6 @@ public class EmailServerTest {
         assertEquals(r1.readLine(), "1:new-recipient");
         assertEquals(r2.readLine(), "2:reply-back");
         assertEquals(r3.readLine(), "3789:from1,./l'l'[]=-)()(*&(*^%^!@%$#^!%@$';");
-    }
-
-    private void startServer(int port) {
-        new Thread() {
-            @Override
-            public void run() {
-                 new EmailServer(port);  
-            } 
-        }.start();
     }
 
     private int getAvailablePort() throws IOException {

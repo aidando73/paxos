@@ -6,11 +6,15 @@ import java.io.*;
 
 /**
  * EmailServer
+ * Listens and accepts email connections
  */
-public class EmailServer {
-
-    //Starts the EmailServer
+public class EmailServer implements Runnable {
+    int port;
     public EmailServer(int port) {
+        this.port = port;
+    }
+    
+    public void run() {
         ConcurrentMap<Integer, EmailConnection> emailRegistry = new ConcurrentHashMap<Integer, EmailConnection>();
         
         //Starts a new thread per connection
@@ -22,5 +26,5 @@ public class EmailServer {
             System.err.println("Email Server: " + e.getMessage());
             e.printStackTrace();
         }
-    }
+    }  
 }

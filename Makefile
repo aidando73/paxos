@@ -26,6 +26,7 @@ test_eserver: compile_test_eserver
 
 test_eclient: compile_test_eclient
 	@$(run_test) test.eclient.EmailClientTest
+	@$(run_test) test.eclient.EmailIntegrationTest
 
 
 # *** Compilation ***
