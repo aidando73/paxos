@@ -2,15 +2,12 @@ package main.paxos;
 
 /**
  * ProposerRunnable
- * Runnable that performs 4 tasks:
- * 1: Broadcasts prepare request
- * 2: Receives and counts promises
- * 3: Broadcasts proposal requests
- * 4: Receives and counts acceptances
+ * Runnable that first tries to issue a prepare request
+ * and then a proposal
  *
- * ProposerRunnable does each task synchronously
- * moving to the next step only if it received majority votes from the previous step
- * You can see a FSM of this Runnable in designs/ProposerFSM.png
+ * This class was implemented in a event driven style using a Mealy Moore finite state machine
+ * You can view this FSM in designs/ProposerFSM.jpg
+ * This class directly implements that FSM.
  */
 public class ProposerRunnable implements Runnable {
 
