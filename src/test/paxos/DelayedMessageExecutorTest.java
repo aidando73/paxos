@@ -7,6 +7,8 @@ import org.junit.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+import java.util.concurrent.*;
+
 /**
  * DelayedMessageExecutorTest
  * Unit Tests for DelayedMessageExecutor
@@ -77,5 +79,26 @@ public class DelayedMessageExecutorTest {
 
         // Email Client should not have been called here
         verify(mockedClient, never()).send("test-message", 5);
+    }
+
+    // Basic test for internal Thread safety
+    @Test
+    public void canSendMultipleImmediates() throws InterruptedException {
+        EmailClient mockedClient = mock(EmailClient.class);
+        DelayedMessageExecutor sender = new DelayedMessageExecutor(mockedClient, ResponseTime.IMMEDIATE);
+
+        ExecutorService executor = Executors.newFixedThreadPool(100);
+        for (int i = 0; i < 100; i++) {
+            executor.execute(new Thread() {
+                @Override
+                public void run() {
+                    sender.send("test-message", 5);
+                }
+            });
+        }
+
+        Thread.sleep(1000);
+
+        verify(mockedClient, times(100)).send("test-message", 5);
     }
 }

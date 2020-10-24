@@ -26,27 +26,24 @@ public class EmailClient {
     }
 
     // Sends a message to server with a recipient
-    public void send(String message, int recipient) {
+    public synchronized void send(String message, int recipient) {
         ensureConnection();
         writer.println(Integer.toString(recipient) + ":" + message);
     }
 
     // Recieves the next message (line based)
     // returns null if inbox is empty
-    public String receive() {
+    public synchronized String receive() {
         ensureConnection();
 
-        // Receive a single line or null if empty
+        //Receive a single line
         try {
-            if (reader.ready()) {
-                return stripMessage(reader.readLine());
-            } 
+            return stripMessage(reader.readLine());
         } catch (Exception e) {
             System.err.println(e.getMessage());
             e.printStackTrace();
+            return null;
         }
-        
-        return null;
     }
 
     //Strips message of recipient id

@@ -9,10 +9,10 @@ package main.paxos;
  * Accept
  * Nack
  */
-public class MessageCodes {
-    public static char PREPARE = 'a';
-    public static char PROMISE = 'b';
-    public static char PROPOSAL = 'c';
-    public static char ACCEPT = 'd';
-    public static char NACK = 'e';
+public enum MessageCodes {
+    PREPARE,
+    PROMISE,
+    PROPOSAL,
+    ACCEPT,
+    NACK
 }

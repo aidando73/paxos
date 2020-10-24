@@ -15,12 +15,6 @@ import java.io.*;
  */
 public class EmailClientTest {
 
-    @Test
-    public void receivesNullIfInboxEmpty() throws IOException{
-        ServerSocket s = new ServerSocket(0);
-        EmailClient client = new EmailClient(s.getLocalPort(), 0);
-        assertEquals(client.receive(), null);
-    }
 
     @Test
     public void canHandshake() throws IOException {
@@ -70,6 +64,40 @@ public class EmailClientTest {
         
         assertEquals(response, "test-message");
     }
+
+    //Basic test to ensure the send method is thread safe
+    //Creates a thousand threads to use send concurrently
+    @Test
+    public void sendIsThreadSafe() throws IOException, InterruptedException {
+        ServerSocket s = new ServerSocket(0);
+
+        EmailClient client = new EmailClient(s.getLocalPort(), 4800);
+
+        Socket conn = s.accept();
+        BufferedReader r = getReader(conn);
+
+        ExecutorService executor = Executors.newFixedThreadPool(1000);
+        for (int i = 0; i < 1000; i++) {
+            executor.execute(new Thread() {
+                @Override
+                public void run() {
+                    client.send("test-message", 5);
+                }
+            });
+        }
+
+        //Wait until all tasks completed
+        executor.shutdown();
+        executor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+        System.out.println("all tasks completed");
+
+        assertEquals(r.readLine(), "4800");
+        for (int i = 0; i < 1000; i++) {
+            assertEquals(r.readLine(), "5:test-message");
+        }
+    }
+
+
 
 
     private BufferedReader getReader(Socket connection) throws IOException {
