@@ -92,4 +92,28 @@ public class AcceptorRunnableTest {
         messages.put(ACCEPT + "10 10");
         acceptor.run();
     }
+
+    @Test
+    public void failsIfFailureIsTrue() throws InterruptedException {
+        failure.set(true);
+
+        messages.put(PREPARE + "56 10 9000");
+
+        executor.execute(acceptor);
+
+        Thread.sleep(250);
+
+        verify(sender, never()).send(PROMISE + "99 10", 56);
+
+        synchronized(failure) {
+            failure.set(false);
+            failure.notifyAll();
+        }
+
+        Thread.sleep(250);
+        messages.put(PREPARE + "56 10 9000");
+        Thread.sleep(250);
+
+        verify(sender).send(PROMISE + "99 10", 56);
+    }
 }

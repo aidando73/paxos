@@ -32,6 +32,19 @@ public class AcceptorRunnable implements Runnable {
     
     public void run() {
         while (true) {
+            // Pretend to fail if failure == true and clear all messages
+            // While we're still using AtomicBoolean we must own the monitor
+            // In order to wait
+            while (failure.get()) {
+                synchronized (failure) {
+                    try {
+                        failure.wait();
+                    } catch (Exception e) {
+                    }
+                }
+                messages.clear();
+            }
+
             String message = "";
             try {
                 message = messages.take();
