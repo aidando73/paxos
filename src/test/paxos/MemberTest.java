@@ -4,6 +4,7 @@ import main.paxos.Member;
 
 import org.junit.*;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 /**
  * MemberTest
@@ -12,7 +13,8 @@ import static org.junit.Assert.*;
 public class MemberTest {
 
     @Test
-    public void test() {
+    public void respondsToPromiseAndAccept() {
+        
         
     }
 }

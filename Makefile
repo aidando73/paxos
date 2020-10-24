@@ -16,7 +16,7 @@ run=java $(class_flag)
 
 
 # *** Testing ***
-test_class_flag=-cp "target/classes/:target/test-classes:src/test/resources:target/testlib/junit-4.13.jar:target/testlib/hamcrest-core-1.3.jar:target/testlib/mockito-all-1.10.19.jar"
+test_class_flag=-cp "target/classes/:target/test-classes:src/test/resources:target/testlib/junit-4.13.jar:target/testlib/hamcrest-core-1.3.jar:target/testlib/mockito-core-3.5.13.jar:target/testlib/byte-buddy-1.10.15.jar:target/testlib/byte-buddy-agent-1.10.15.jar:target/testlib/objenesis-3.1.jar"
 compile_test=javac $(test_class_flag) -d target/test-classes/
 run_test=java $(test_class_flag) org.junit.runner.JUnitCore
 
@@ -29,6 +29,7 @@ test_eclient: compile_test_eclient
 	@$(run_test) test.eclient.EmailIntegrationTest
 
 test_paxos: compile_test_paxos
+	@$(run_test) test.paxos.DelayedMessageExecutorTest
 	@$(run_test) test.paxos.MessageCodesTest
 	@$(run_test) test.paxos.MemberTest
 
