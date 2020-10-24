@@ -3,6 +3,8 @@ package main.paxos;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static main.paxos.MessageCodes.*;
+
 
 /**
  * AcceptorRunnable
@@ -11,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 
 public class AcceptorRunnable implements Runnable {
-    int id;
+    private final int id;
 
     private long maxPromise = -1;
     private long maxAccept = -1;
@@ -30,36 +32,73 @@ public class AcceptorRunnable implements Runnable {
     
     public void run() {
         while (true) {
+            String message = "";
             try {
-                String message = messages.take();
-                // Separate the type from message
-                MessageCodes type = (MessageCodes)Character.getNumericValue(message.charAt(0));
-                message = message.substring(1);
+                message = messages.take();
 
-                switch (type) {
-                    case PREPARE:
-                        handlePrepare(message);                  
-                        break;
-
-                    
-                    default:
-                        throw new RuntimeException("Unknown Code for Acceptor: " + type);
-                }
-                
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 e.printStackTrace();
             }
+
+            // Separate the type from message
+            char type = message.charAt(0);
+            message = message.substring(1);
+            // Handle PREPARE and PROPOSAL
+            switch (type) {
+                case PREPARE:
+                    handlePrepare(message);                  
+                    break;
+
+                case PROPOSAL:
+                    handleProposal(message);
+                    break;
+                
+                default:
+                    throw new RuntimeException("Unknown Code for Acceptor: " + type);
+            }
+                
         }
     }
 
     private void handlePrepare(String message) {
-         String[] messageArr = message.split(" ");     
-         int from = Integer.parseInt(messageArr[0]);
-         int n = Integer.parseInt(messageArr[1]);
+        String[] messageArr = message.split(" ");     
+        int from = Integer.parseInt(messageArr[0]);
+        int n = Integer.parseInt(messageArr[1]);
 
-         if (n > maxPromise) {
-            sender.send(String.format("%d %d", id, n), from);
+        if (n > maxPromise) {
+            // If haven't accepted any proposals
+            if (maxAccept == -1) {
+                message = String.format("%c%d %d", PROMISE, id, n);
+
+            // If have accepted proposals
+            } else {
+                message = String.format("%c%d %d %d %d", PROMISE, id, n, maxAccept, maxAcceptValue);
+            }
+            maxPromise = n;
+        } else {
+            message = String.format("%c%d %d", PREPARENACK, id, n);
+        }
+        sender.send(message, from);
+    }
+
+    private void handleProposal(String message) {
+        String[] messageArr = message.split(" ");     
+        int from = Integer.parseInt(messageArr[0]);
+        int n = Integer.parseInt(messageArr[1]);
+        int v = Integer.parseInt(messageArr[2]);
+
+        //Send accept if we haven't promised
+        if (maxPromise < n) {
+            sender.send(String.format("%c%d %d", ACCEPT, id, n), from);
+            // Set new accepted max if required
+            if (maxAccept < n) {
+                maxAccept = n;
+                maxAcceptValue = v;
+            }
+        //Send a PROPOSALNACK if we did promise
+        } else {
+            sender.send(String.format("%c%d %d", PROPOSALNACK, id, n), from);
         }
     }
 }

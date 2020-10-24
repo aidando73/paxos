@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 import main.paxos.*;
+import static main.paxos.MessageCodes.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
@@ -31,9 +32,9 @@ public class AcceptorRunnableTest {
 
     @Test
     public void sendPromiseForAPrepare() throws InterruptedException {
-        messages.put(MessageCodes.PREPARE + "56 10");
-
         executor.execute(acceptor);
+
+        messages.put(PREPARE + "56 10");
 
         Thread.sleep(250);
 
@@ -41,6 +42,54 @@ public class AcceptorRunnableTest {
     }
 
     @Test
-    public void test3() {
+    public void sendNackForAPrepare() throws InterruptedException {
+        executor.execute(acceptor);
+
+        //Send prepare that Acceptor should accept
+        messages.put(PREPARE + "56 10");
+        //Send prepare that acceptor should now reject
+        messages.put(PREPARE + "47 5");
+
+        Thread.sleep(250);
+
+        verify(sender).send(MessageCodes.PROMISE + "99 10", 56);
+        verify(sender).send(MessageCodes.PREPARENACK + "99 5", 47);
+    }
+
+    @Test
+    public void sendAnAcceptIfNoPromise() throws InterruptedException {
+        executor.execute(acceptor);
+
+        messages.put(PROPOSAL + "56 10 9000");
+
+        Thread.sleep(250);
+
+        verify(sender).send(MessageCodes.ACCEPT + "99 10", 56);
+    }
+
+    @Test
+    public void sendAProposalNackIfPromise() throws InterruptedException {
+        executor.execute(acceptor);
+
+
+        messages.put(PREPARE + "56 10 9000");
+        messages.put(PROPOSAL + "24 5 2000");
+
+        Thread.sleep(250);
+
+        verify(sender).send(PROMISE + "99 10", 56);
+        verify(sender).send(PROPOSALNACK + "99 5", 24);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void throwsExceptionIfSentPromise() throws InterruptedException {
+        messages.put(PROMISE + "10 10");
+        acceptor.run();
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void throwsExceptionIfSentAccept() throws InterruptedException {
+        messages.put(ACCEPT + "10 10");
+        acceptor.run();
     }
 }
