@@ -10,6 +10,8 @@ import static main.paxos.MessageCodes.*;
  * AcceptorRunnable
  * Runnable that responds to prepare and proposals
  * coming from a producer/consumer style queue
+ *
+ *
  */
 
 public class AcceptorRunnable implements Runnable {
