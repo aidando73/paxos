@@ -64,6 +64,29 @@ public class ProposerRunnableTest {
     }
 
     @Test
+    public void doNothingIfFailure() throws InterruptedException {
+        failure.set(true);
+        executor.execute(initalizeProposerRunnable(20, 0));
+
+        Thread.sleep(250);
+
+        messages.put(PREPARENACK + "2 5");
+
+        synchronized(failure) {
+            failure.set(false);
+            failure.notifyAll();
+        }
+
+        Thread.sleep(250);
+
+        // Prepare broadcast should only ever be called once since we failed
+        for (int i = 0; i < 20; i++) {
+            if (i != 5)
+                verify(sender, times(1)).send(String.format("%c%d %d",PREPARE, 5, 5),i);
+        }
+    }
+
+    @Test
     public void ignoresProposalNackAndAcceptDuringPREPARE() throws InterruptedException {
         executor.execute(initalizeProposerRunnable(20, 0));
 

@@ -58,6 +58,19 @@ public class ProposerRunnable implements Runnable {
         //Always begin in the prepare state
         next(PREPARE);
         while (true) {
+            // Pretend to fail if failure == true and clear all messages
+            // While we're still using AtomicBoolean we must own the monitor
+            // In order to wait
+            while (failure.get()) {
+                synchronized (failure) {
+                    try {
+                        failure.wait();
+                    } catch (Exception e) {
+                    }
+                }
+                messages.clear();
+            }
+
             // Get next message
             String message = null;
             try {
@@ -122,7 +135,6 @@ public class ProposerRunnable implements Runnable {
 
             case DONE:
                 System.out.println("VALUE HAS BEEN CHOSEN: " + Integer.toString(proposalValue));
-                System.exit(0);
                 return;
 
             default:
