@@ -9,12 +9,12 @@ import static main.paxos.MessageCodes.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
-
 /**
- * ProposerRunnabletest
- * Unit tests for proposer test
+ * ProposerRunnableSlowTest
+ * Tests that test the timeout functionality of a proposer
  */
-public class ProposerRunnableTest {
+public class ProposerRunnableSlowTest {
+
     private BlockingQueue<String> messages;
     private DelayedMessageExecutor sender;
     private final int id = 5;
@@ -34,7 +34,7 @@ public class ProposerRunnableTest {
     }
 
     @Test
-    public void broadCastPrepareRequest() throws InterruptedException {
+    public void timeoutAfter15Seconds() throws InterruptedException {
         executor.execute(initalizeProposerRunnable(20, 0));
 
         Thread.sleep(250);
@@ -43,24 +43,13 @@ public class ProposerRunnableTest {
             if (i != 5)
                 verify(sender).send(String.format("%c%d %d",PREPARE, 5, 5),i);
         }
-    }
 
-    @Test
-    public void broadCastPrepareRequestAfterDelay() throws InterruptedException {
-        executor.execute(initalizeProposerRunnable(20, 500));
+        // Wait 15 seconds with some buffer
+        Thread.sleep(15250);
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 19; i >= 0; i--) {
             if (i != 5)
-                verify(sender, never()).send(String.format("%c%d %d",PREPARE, 5, 5),i);
-        }
-
-        Thread.sleep(550);
-
-
-        for (int i = 0; i < 20; i++) {
-            if (i != 5)
-                verify(sender).send(String.format("%c%d %d",PREPARE, 5, 5),i);
+                verify(sender).send(String.format("%c%d %d",PREPARE, 5, 25),i);
         }
     }
-
 }

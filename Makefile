@@ -29,10 +29,14 @@ test_eclient: compile_test_eclient
 	@$(run_test) test.eclient.EmailIntegrationTest
 
 test_paxos: compile_test_paxos
+	@$(run_test) test.paxos.ProposerRunnableTest
 	@$(run_test) test.paxos.AcceptorRunnableTest
 	@$(run_test) test.paxos.MessageCodesTest
 	@$(run_test) test.paxos.MemberTest
 	@$(run_test) test.paxos.DelayedMessageExecutorTest
+
+test_slow_paxos: compile_test_paxos
+	@$(run_test) test.paxos.ProposerRunnableSlowTest
 
 
 # *** Compilation ***

@@ -136,7 +136,7 @@ public class ProposerRunnable implements Runnable {
     private void broadCastPrepare() {
          for (int recipient = 0; recipient < N; recipient++) {
              if (recipient != id)
-                 sender.send(String.format("%c%d $d", MessageCodes.PREPARE, id, proposalId), recipient);
+                 sender.send(String.format("%c%d %d", MessageCodes.PREPARE, id, proposalId), recipient);
          }  
     }
 }
