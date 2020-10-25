@@ -40,21 +40,17 @@ public class DelayedMessageExecutor {
                     switch (delay) {
                         case IMMEDIATE:
                             //Wait no time
-                            System.out.println("sending immediate message");
                             break;
 
                         case MEDIUM:
                             Thread.sleep(1000);
-                            System.out.println("sending medium delayed message");
                             break;
 
                         case LATE:
                             Thread.sleep(4000);
-                            System.out.println("Sending late delayed message");
                             break;
 
                         case NEVER:
-                            System.out.println("Response time set to NEVER. Not sending message");
                             return;
                         
                         default:

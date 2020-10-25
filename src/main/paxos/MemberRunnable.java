@@ -74,7 +74,9 @@ public class MemberRunnable implements Runnable {
 
         // Timer objects for timeouts
         Timer timer = new Timer();
-        timer.setTimeout(Thread.currentThread(), timeToFail);
+        // Only set a timer if timeToFail is positive
+        if (timeToFail > 0)
+            timer.setTimeout(Thread.currentThread(), timeToFail);
         while (!fullShutdown.get() && !shutdown.get()) {
             // Calculate failure
             // If current thread has been interrupted. 
