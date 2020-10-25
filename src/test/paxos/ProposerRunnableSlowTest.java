@@ -52,4 +52,42 @@ public class ProposerRunnableSlowTest {
                 verify(sender).send(String.format("%c%d %d",PREPARE, 5, 25),i);
         }
     }
+
+    private void setProposalState() throws InterruptedException {
+        executor.execute(initalizeProposerRunnable(20, 0));
+
+        Thread.sleep(250);
+
+        for (int i = 0; i < 20; i++) {
+            if (i != 5)
+                verify(sender).send(String.format("%c%d %d",PREPARE, 5, 5),i);
+        }
+
+        // Send exactly a majority promises
+        for (int i = 0; i < 14; i++) {
+            if (i != 5)
+                messages.put(String.format("%c%d %d %d %d", PROMISE, i, 5, i, 500));
+        }
+
+        Thread.sleep(250);
+
+        // Verify that a proposal was broadcast
+        for (int i = 0; i < 20; i++) {
+            if (i != 5)
+                verify(sender).send(String.format("%c%d %d %d", PROPOSAL, 5, 5, 500),i);
+        }
+    }
+
+    
+    @Test
+    public void timeoutAfter15SecondsFromProposal() throws InterruptedException {
+        setProposalState();
+
+        Thread.sleep(16000);
+
+        for (int i = 0; i < 20; i++) {
+            if (i != 5)
+                verify(sender).send(String.format("%c%d %d",PREPARE, 5, 25),i);
+        }
+    }
 }

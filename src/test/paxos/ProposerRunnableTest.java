@@ -63,4 +63,167 @@ public class ProposerRunnableTest {
         }
     }
 
+    @Test
+    public void ignoresProposalNackAndAcceptDuringPREPARE() throws InterruptedException {
+        executor.execute(initalizeProposerRunnable(20, 0));
+
+        Thread.sleep(250);
+
+        for (int i = 0; i < 20; i++) {
+            if (i != 5)
+                verify(sender).send(String.format("%c%d %d",PREPARE, 5, 5),i);
+        }
+
+        messages.put(ACCEPT + "0 0");
+        messages.put(PROPOSALNACK + "0 0");
+
+        Thread.sleep(250);
+
+        verifyNoMoreInteractions(sender);
+    }
+
+    @Test
+    public void ignoresOldPromises() throws InterruptedException {
+        executor.execute(initalizeProposerRunnable(20, 0));
+
+        Thread.sleep(250);
+
+        for (int i = 0; i < 20; i++) {
+            if (i != 5)
+                verify(sender).send(String.format("%c%d %d",PREPARE, 5, 5),i);
+        }
+
+        messages.put(PROMISE + "0 4");
+
+        Thread.sleep(250);
+
+        verifyNoMoreInteractions(sender);
+    }
+
+    @Test
+    public void rebroadcastIfPrepareNack() throws InterruptedException {
+        executor.execute(initalizeProposerRunnable(20, 0));
+
+        Thread.sleep(250);
+
+        for (int i = 0; i < 20; i++) {
+            if (i != 5)
+                verify(sender).send(String.format("%c%d %d",PREPARE, 5, 5),i);
+        }
+
+        messages.put(PREPARENACK + "0 4");
+
+        Thread.sleep(250);
+
+        // Check if there was as rebroadcase with 1xN + id new proposal Id
+        for (int i = 0; i < 20; i++) {
+            if (i != 5)
+                verify(sender).send(String.format("%c%d %d",PREPARE, 5, 25),i);
+        }
+    }
+
+    @Test
+    public void sendProposalsIfEnoughPromises() throws InterruptedException {
+        executor.execute(initalizeProposerRunnable(20, 0));
+
+        Thread.sleep(250);
+
+        for (int i = 0; i < 20; i++) {
+            if (i != 5)
+                verify(sender).send(String.format("%c%d %d",PREPARE, 5, 5),i);
+        }
+
+        // Send exactly 10 proposals with random accepted values
+        for (int i = 0; i < 11; i++) {
+            if (i != 5)
+                messages.put(String.format("%c%d %d %d %d", PROMISE, i, 5, i, 500));
+        }
+
+        Thread.sleep(250);
+        // Check that no proposals have been sent yet
+        verifyNoMoreInteractions(sender);
+
+        // Now send the last vote
+        // With an accepted value that should be adopted by propooser
+        messages.put(String.format("%c%d %d %d %d", PROMISE, 11, 5, 200, 200));
+
+        Thread.sleep(250);
+
+        // Verify that a proposal was broadcast
+        for (int i = 0; i < 20; i++) {
+            if (i != 5)
+                verify(sender).send(String.format("%c%d %d %d", PROPOSAL, 5, 5, 200),i);
+        }
+    }
+
+    // Helper method to set proposer into the PROPOSAL stage for testing
+    private void setProposalState() throws InterruptedException {
+        executor.execute(initalizeProposerRunnable(20, 0));
+
+        Thread.sleep(250);
+
+        for (int i = 0; i < 20; i++) {
+            if (i != 5)
+                verify(sender).send(String.format("%c%d %d",PREPARE, 5, 5),i);
+        }
+
+        // Send exactly a majority promises
+        for (int i = 0; i < 14; i++) {
+            if (i != 5)
+                messages.put(String.format("%c%d %d %d %d", PROMISE, i, 5, i, 500));
+        }
+
+        Thread.sleep(250);
+
+        // Verify that a proposal was broadcast
+        for (int i = 0; i < 20; i++) {
+            if (i != 5)
+                verify(sender).send(String.format("%c%d %d %d", PROPOSAL, 5, 5, 500),i);
+        }
+    }
+
+    @Test
+    public void doNothingWhenPromiseOrPromiseNackOrWrongProposalId() throws InterruptedException {
+        setProposalState();
+
+        messages.put(String.format("%c%d %d", PROMISE, 4, 5));
+        messages.put(String.format("%c%d %d", PREPARENACK, 4, 5));
+        messages.put(String.format("%c%d %d", ACCEPT, 4, 3));
+
+        Thread.sleep(250);
+        verifyNoMoreInteractions(sender);
+    }
+
+    @Test
+    public void resetToPrepareIfAcceptNack() throws InterruptedException {
+        setProposalState();
+
+        messages.put(String.format("%c%d %d", PROPOSALNACK, 4, 5));
+        
+        Thread.sleep(250);
+        for (int i = 0; i < 20; i++) {
+            if (i != 5)
+                verify(sender).send(String.format("%c%d %d",PREPARE, 5, 25),i);
+        }
+    }
+
+    @Test
+    public void movesToStateDONEIfmajorityAccepts() throws InterruptedException {
+        setProposalState();
+
+        // Send exactly 10 accept messages
+        for (int i = 0; i < 11; i++) {
+            if (i != 5)
+                messages.put(String.format("%c%d %d", ACCEPT, i, 5));
+        }
+
+        Thread.sleep(250);
+        
+        verifyNoMoreInteractions(sender);
+
+        Thread.sleep(250);
+
+        // Send the 11th message
+        messages.put(String.format("%c%d %d", ACCEPT, 11, 5));
+    }
 }

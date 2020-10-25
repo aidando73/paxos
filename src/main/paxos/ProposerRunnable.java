@@ -19,7 +19,7 @@ public class ProposerRunnable implements Runnable {
     private long proposalNum = 0;
     private final int N;
     private final int id;
-    private int proposalvalue = -1;
+    private int proposalValue = -1;
 
     BlockingQueue<String> messages;
     Set<Integer> promiseSet = new HashSet<Integer>();
@@ -72,9 +72,24 @@ public class ProposerRunnable implements Runnable {
             message = message.substring(1);
 
             switch (type) {
+                case MessageCodes.PROMISE:
+                    receivePromise(message);
+                    break;
+
+                case MessageCodes.PREPARENACK:
+                    receivePromisenack();
+                    break;
+
+                case MessageCodes.ACCEPT:
+                    receiveAccept(message);
+                    break;
+
+                case MessageCodes.PROPOSALNACK:
+                    receiveAcceptnack();
+                    break;
                 
                 default:
-                    break;
+                    throw new RuntimeException("Unknown message type in ProposerRunnable.run(): " + type);
             }
         }
     }
@@ -95,17 +110,114 @@ public class ProposerRunnable implements Runnable {
                 return;
 
             case PROPOSAL:
-                
+                broadCastProposal();
+                acceptSet.clear();
                 return;
 
             case DONE:
-                
+                System.out.println("VALUE HAS BEEN CHOSEN: " + Integer.toString(proposalValue));
+                System.exit(0);
                 return;
 
             default:
                 throw new RuntimeException("Unknown Proposer new state: " + Integer.toString(state));      
         }
     }
+
+    private int maxAcceptedId = -1;
+    private void receivePromise(String message) {
+        String[] messageArr = message.split(" ");
+        int fromId = Integer.parseInt(messageArr[0]);
+        int fromProposalId = Integer.parseInt(messageArr[1]);
+
+        switch (state) {
+            case PREPARE:
+                // If promise is from an old prepare, do nothing
+                if (fromProposalId != proposalId)
+                    return;
+
+                // Add promise to set
+                promiseSet.add(fromId);
+                // If accepted value was set
+                if (messageArr.length == 4) {
+                    int fromAcceptedId = Integer.parseInt(messageArr[2]);
+                    if (fromAcceptedId > maxAcceptedId) {
+                        maxAcceptedId = fromAcceptedId;
+                        proposalValue = Integer.parseInt(messageArr[3]);
+                    }
+                }
+
+                // If we've accumulated majority promises, move to state PROPOSAL
+                if (promiseSet.size() >= (N/2 + 1))
+                    next(PROPOSAL);
+                return;
+
+            case PROPOSAL:
+                //do nothing
+                return;
+
+            default:
+                throw new RuntimeException("Unknown Proposer new state: " + Integer.toString(state));
+        }
+    }
+
+    private void receivePromisenack() {
+        switch (state) {
+            case PREPARE:
+                next(PREPARE);
+                return;
+
+            case PROPOSAL:
+                // do nothing
+                return;
+
+            default:
+                break;
+        }
+    }
+
+    private void receiveAccept(String message) {
+        String[] messageArr = message.split(" ");
+        int fromId = Integer.parseInt(messageArr[0]);
+        int fromProposalId = Integer.parseInt(messageArr[1]);
+
+        switch (state) {
+            case PREPARE:
+                // do nothing
+                return;
+
+            case PROPOSAL:
+                // If accept message is from different proposal
+                // Do nothing
+                if (fromProposalId != proposalId)
+                    return;
+
+                acceptSet.add(fromId);
+
+                if (acceptSet.size() >= (N/2 + 1))
+                    next(DONE);
+                return;
+
+            default:
+                throw new RuntimeException("Unknown Proposer new state: " + Integer.toString(state));      
+        }  
+    }
+
+    private void receiveAcceptnack() {
+        switch (state) {
+            case PREPARE:
+                // do nothing
+                return;
+
+            case PROPOSAL:
+                next(PREPARE);
+                break;
+
+            default:
+                throw new RuntimeException("Unknown Proposer new state: " + Integer.toString(state));
+        }
+    }
+
     
     private void timeout() {
         switch (state) {
@@ -121,6 +233,8 @@ public class ProposerRunnable implements Runnable {
                 throw new RuntimeException("Unknown state for timeout: " + Integer.toString(state));
         }
     }
+
+    // *** HELPERS *** (non-FSM helper methods)
     
     //Sets a globally unique proposal id by:
     //proposalId = id + N*proposalNum
@@ -132,11 +246,19 @@ public class ProposerRunnable implements Runnable {
         proposalNum++;
     }
 
-    //Broadcasts a prepare request to all users
+    //Broadcasts a prepare request to all mebers
     private void broadCastPrepare() {
          for (int recipient = 0; recipient < N; recipient++) {
              if (recipient != id)
                  sender.send(String.format("%c%d %d", MessageCodes.PREPARE, id, proposalId), recipient);
+         }  
+    }
+
+    //Broadcasts a proposal request to all members
+    private void broadCastProposal() {
+         for (int recipient = 0; recipient < N; recipient++) {
+             if (recipient != id)
+                 sender.send(String.format("%c%d %d %d", MessageCodes.PROPOSAL, id, proposalId, proposalValue), recipient);
          }  
     }
 }
