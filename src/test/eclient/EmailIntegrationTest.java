@@ -17,7 +17,7 @@ import java.io.*;
 public class EmailIntegrationTest {
 
     @Test
-    public void emailClientCanEcho() throws IOException {
+    public void emailClientCanEcho() throws IOException, InterruptedException {
         int port = getAvailablePort();
         new Thread(new EmailServer(port)).start();
         EmailClient client = new EmailClient(port, 5);
@@ -47,7 +47,7 @@ public class EmailIntegrationTest {
     }
 
     // Polls for a response from inbox
-    private String receiveMessage(EmailClient client) {
+    private String receiveMessage(EmailClient client) throws InterruptedException {
         String response;
         while ((response = client.receive()) == null) {
             try {

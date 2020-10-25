@@ -15,6 +15,7 @@ public class EmailClient {
     PrintWriter writer = null;
     BufferedReader reader = null;
     int emailId;
+    BlockingQueue<String> inbox;
 
     // Connects to server
     // Creates asynchronous thread to get connection
@@ -23,27 +24,23 @@ public class EmailClient {
         socketConnector = new SocketConnecter("localhost", port, emailId)
                 .getConnection();
         this.emailId = emailId;
+
+        inbox = new LinkedBlockingQueue<String>();
+        initializeInbox();
     }
 
     // Sends a message to server with a recipient
-    public synchronized void send(String message, int recipient) {
-        ensureConnection();
-        writer.println(Integer.toString(recipient) + ":" + message);
+    public void send(String message, int recipient) {
+        synchronized (writer) {
+            writer.println(Integer.toString(recipient) + ":" + message);
+        }
     }
 
-    // Recieves the next message (line based)
-    // returns null if inbox is empty
-    public synchronized String receive() {
-        ensureConnection();
 
-        //Receive a single line
-        try {
-            return stripMessage(reader.readLine());
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
+    // Receives a single message
+    // Can be interrupted
+    public String receive() throws InterruptedException {
+        return stripMessage(inbox.take());
     }
 
     //Strips message of recipient id
@@ -76,6 +73,23 @@ public class EmailClient {
                 System.exit(-1);
             }
         }
+    }
+
+    // Initializes thread that buffers communication
+    // Into inbox
+    private void initializeInbox() {
+        ensureConnection();
+        new Thread() {
+             @Override
+             public void run() {
+                 try {
+                     while (true)
+                         inbox.put(reader.readLine());
+                 } catch (Exception e) {
+                     // Shutdown when socket closes
+                 }
+             }
+        }.start(); 
     }
 }
 
