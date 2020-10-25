@@ -30,7 +30,7 @@ public class ProposerRunnableSlowTest {
     }
 
     private ProposerRunnable initalizeProposerRunnable(int N, int timeToPropose) {
-        return new ProposerRunnable(N, id, timeToPropose, messages, sender, failure);
+        return new ProposerRunnable(N, id, timeToPropose, messages, sender, failure, true);
     }
 
     @Test

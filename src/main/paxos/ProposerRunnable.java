@@ -37,13 +37,19 @@ public class ProposerRunnable implements Runnable {
 
     private int state;
 
-    public ProposerRunnable(int N, int id, int timeToPropose, BlockingQueue<String> messages, DelayedMessageExecutor sender, AtomicBoolean failure) {
+    public ProposerRunnable(int N, int id, int timeToPropose, BlockingQueue<String> messages, DelayedMessageExecutor sender, AtomicBoolean failure, boolean ambition) {
         this.N = N;
         this.id = id;
         this.messages = messages;
         this.timeToPropose = timeToPropose;
         this.sender = sender;
         this.failure = failure;
+
+        // If Proposer is ambitious he will initially choose himself as the value
+        // Otherwise he will choose randomly
+        proposalValue = id;
+        if (!ambition)
+            proposalValue = new Random().nextInt(N);
     }
     
     // Reads message queue with a timeout
