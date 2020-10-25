@@ -35,9 +35,8 @@ A <email> consists of:
 ### Notes
 #### Specific Implementation Notes
 - The distiguished learner is the proposer that issued the proposal.
-    - Upon learning that their value is chosen, a distinguished learner should broadcast a learn message to signify the end of the protocol.
     - Since many nodes might ignore messages, or be unavailable, there needs to be a separate protocol for when a distinguished learner tries to communicate with all other nodes in the system about the chosen value. As this assignment is about Paxos, I've decided that this is out of scope. Once nodes have chosen a value, there is no need to run Paxos any further and as such the algorithm terminates. Of course, in the real world we'd need a way of having all learner nodes learn the value and restarting paxos for the next value.
-- All members can be proposers, acceptors and learners.
+- All members are simultaneously proposers, and acceptors.
 - Non-byzantine, asynchronous message model:
     - Nodes can fail, operate at arbitrary speed, or can restart.
     - Extra: Messages can be duplicated, take arbitrarily long to be delivered and lost.
