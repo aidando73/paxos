@@ -8,8 +8,8 @@ This is Assignment 3, a multi-threaded simulation of the Paxos Protocol as defin
 - Isolated unit tests using Mockaroo and Junit.
 - Paxos Compliant
 
-
 ### Getting Started
+I have submitted this entire folder to web-submission. However, in the case that there are problems. I've also included a zip file called project.zip. If all else fails, you can clone this project on https://github.com/REslim30/paxos.
 
 #### Design
 The system consists of 3 main components:
