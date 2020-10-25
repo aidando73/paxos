@@ -4,9 +4,13 @@
 This is Assignment 3, a multi-threaded simulation of the Paxos Protocol as defined by https://lamport.azurewebsites.net/pubs/paxos-simple.pdf. It is recommended to read this document in an markdown reader.
 
 #### Features
-- A JSON frontend
 - Isolated unit tests using Mockaroo and Junit.
 - Paxos Compliant
+- Members have dynamic behaviour that you can define easily via a JSON config file
+    - Message delay
+    - Time to fail
+    - Time to restart
+    - How many members
 
 ### Getting Started
 I have submitted this entire folder to web-submission. However, in the case that there are problems. I've also included a zip file called project.zip. If all else fails, you can clone this project on https://github.com/REslim30/paxos.
