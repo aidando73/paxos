@@ -51,6 +51,7 @@ public class MemberRunnable implements Runnable {
         DelayedMessageExecutor sender = new DelayedMessageExecutor(eClient, responseTime);
         failure = new AtomicBoolean(false);
         shutdown = new AtomicBoolean(false);
+        this.fullShutdown = fullShutdown;
         proposerMessages = new LinkedBlockingQueue<String>();
         acceptorMessages = new LinkedBlockingQueue<String>();
 
@@ -73,14 +74,13 @@ public class MemberRunnable implements Runnable {
 
         // Timer objects for timeouts
         Timer timer = new Timer();
-        // Thread cur = Thread.currentThread();
-        // timer.setTimeout(Thread.currentThread(), timeToFail);
+        timer.setTimeout(Thread.currentThread(), timeToFail);
         while (!fullShutdown.get() && !shutdown.get()) {
             // Calculate failure
             // If current thread has been interrupted. 
             // Then our timer has gone off
             // Toggle failure
-            if (Thread.currentThread().interrupted()) {
+            if (Thread.interrupted()) {
                 synchronized (failure) {
                     failure.set(!failure.get());
                     // If we're in state of failure, set a timer for restart

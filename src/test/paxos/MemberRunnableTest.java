@@ -31,7 +31,9 @@ public class MemberRunnableTest {
 
     @Test 
     public void restartsAndFails() throws InterruptedException {
+        // 0.5 seconds to fail, 1 seconds to restart
         initializeMember(500, 1000, 80000);
+        System.out.println("0.5 seconds to fail, 1 second to restart: ");
 
         Thread.sleep(4000);
     }

@@ -18,9 +18,10 @@ public class Timer {
                 try {
                     Thread.sleep(timeout);
                 } catch (Exception e) {
-                    System.err.println(e.getMessage());
+                    System.err.println("In timer thread: " + e.getMessage());
                     e.printStackTrace();
                 }
+
                 interruptee.interrupt();
             }
         });
