@@ -20,17 +20,19 @@ public class ProposerRunnableSlowTest {
     private final int id = 5;
     private AtomicBoolean failure;
     private ExecutorService executor;
+    private AtomicBoolean shutdown;
 
     @Before
     public void setFields() {
         messages = new LinkedBlockingQueue<String>();
         sender = mock(DelayedMessageExecutor.class);
-        failure = new AtomicBoolean();
+        failure = new AtomicBoolean(false);
         executor = Executors.newFixedThreadPool(1000);
+        shutdown = new AtomicBoolean(false);
     }
 
     private ProposerRunnable initalizeProposerRunnable(int N, int timeToPropose) {
-        return new ProposerRunnable(N, id, timeToPropose, messages, sender, failure, true);
+        return new ProposerRunnable(N, id, timeToPropose, messages, sender, failure, true, shutdown);
     }
 
     @Test

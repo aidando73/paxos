@@ -116,4 +116,32 @@ public class AcceptorRunnableTest {
 
         verify(sender).send(PROMISE + "99 10", 56);
     }
+
+    @Test
+    public void gracefulShutdown() throws InterruptedException {
+        Future thread = executor.submit(acceptor);
+
+        Thread.sleep(250);
+        
+        thread.cancel(true);
+        executor.shutdown();
+
+        Thread.sleep(250);
+
+        assertEquals(executor.isTerminated(), true); 
+    }
+    @Test
+    public void gracefulShutdownOnFailure() throws InterruptedException {
+        failure.set(true);
+        Future thread = executor.submit(acceptor);
+
+        Thread.sleep(250);
+        
+        thread.cancel(true);
+        executor.shutdown();
+
+        Thread.sleep(250);
+
+        assertEquals(executor.isTerminated(), true); 
+   }
 }

@@ -29,6 +29,7 @@ public class ProposerRunnable implements Runnable {
     //Timing variables
     private final int timeToPropose;
     private final AtomicBoolean failure;
+    private final AtomicBoolean shutdown;
 
     // Mealy Moore FSM state variables
     private static final int PREPARE = 0;
@@ -37,13 +38,23 @@ public class ProposerRunnable implements Runnable {
 
     private int state;
 
-    public ProposerRunnable(int N, int id, int timeToPropose, BlockingQueue<String> messages, DelayedMessageExecutor sender, AtomicBoolean failure, boolean ambition) {
+    public ProposerRunnable(
+        int N,
+        int id,
+        int timeToPropose, 
+        BlockingQueue<String> messages, 
+        DelayedMessageExecutor sender, 
+        AtomicBoolean failure, 
+        boolean ambition,
+        AtomicBoolean shutdown
+    ) {
         this.N = N;
         this.id = id;
         this.messages = messages;
         this.timeToPropose = timeToPropose;
         this.sender = sender;
         this.failure = failure;
+        this.shutdown = shutdown;
 
         // If Proposer is ambitious he will initially choose himself as the value
         // Otherwise he will choose randomly
@@ -52,33 +63,36 @@ public class ProposerRunnable implements Runnable {
             proposalValue = new Random().nextInt(N);
     }
     
+    // Thread entry point. Exits on an interrupt
+    public void run() {
+        try {
+            receiveMessage();
+        } catch (InterruptedException e) {
+        }
+    }
+
     // Reads message queue with a timeout
     // Where 'events' come from in terms of our FSM
-    public void run() {
+    // If thread is interrupted, then initiate shutdown sequence
+    private void receiveMessage() throws InterruptedException {
         //Always begin in the prepare state
         next(PREPARE);
-        while (true) {
+        // Stop if shutdown is true or we've been interrupted
+        while (!Thread.interrupted() && !shutdown.get()) {
             // Pretend to fail if failure == true and clear all messages
             // While we're still using AtomicBoolean we must own the monitor
             // In order to wait
             while (failure.get()) {
                 synchronized (failure) {
-                    try {
-                        failure.wait();
-                    } catch (Exception e) {
-                    }
+                    failure.wait();
                 }
                 messages.clear();
             }
 
             // Get next message
             String message = null;
-            try {
-                message = messages.poll(15, TimeUnit.SECONDS);              
-            } catch (InterruptedException e) {
-                System.err.println(e.getMessage());
-                e.printStackTrace();
-            }
+
+            message = messages.poll(15, TimeUnit.SECONDS);              
 
             // If no messages were received in 15 seconds
             // Trigger a timeout
@@ -135,6 +149,7 @@ public class ProposerRunnable implements Runnable {
 
             case DONE:
                 System.out.println("VALUE HAS BEEN CHOSEN: " + Integer.toString(proposalValue));
+                shutdown.set(true);
                 return;
 
             default:

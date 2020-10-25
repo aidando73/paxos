@@ -20,17 +20,19 @@ public class ProposerRunnableTest {
     private final int id = 5;
     private AtomicBoolean failure;
     private ExecutorService executor;
+    private AtomicBoolean shutdown;
 
     @Before
     public void setFields() {
         messages = new LinkedBlockingQueue<String>();
         sender = mock(DelayedMessageExecutor.class);
-        failure = new AtomicBoolean();
+        failure = new AtomicBoolean(false);
         executor = Executors.newFixedThreadPool(1000);
+        shutdown = new AtomicBoolean(false);
     }
 
     private ProposerRunnable initalizeProposerRunnable(int N, int timeToPropose) {
-        return new ProposerRunnable(N, id, timeToPropose, messages, sender, failure, true);
+        return new ProposerRunnable(N, id, timeToPropose, messages, sender, failure, true, shutdown);
     }
 
     @Test
@@ -243,10 +245,49 @@ public class ProposerRunnableTest {
         Thread.sleep(250);
         
         verifyNoMoreInteractions(sender);
+        assertEquals(shutdown.get(), false);
 
         Thread.sleep(250);
 
         // Send the 11th message
         messages.put(String.format("%c%d %d", ACCEPT, 11, 5));
+
+        // Shutdown executor
+        executor.shutdown();
+
+        Thread.sleep(250);
+        assertEquals(shutdown.get(), true);
+        assertEquals(executor.isTerminated(), true);
     }
+
+
+    @Test
+    public void gracefulShutdown() throws InterruptedException {
+        Future thread = executor.submit(initalizeProposerRunnable(20, 0));
+
+        Thread.sleep(250);
+        
+        thread.cancel(true);
+        executor.shutdown();
+
+        Thread.sleep(250);
+
+        assertEquals(executor.isTerminated(), true); 
+    }
+
+    @Test
+    public void gracefulShutdownOnFailure() throws InterruptedException {
+        failure.set(true);
+        Future thread = executor.submit(initalizeProposerRunnable(20, 0));
+
+        Thread.sleep(250);
+        
+        thread.cancel(true);
+        executor.shutdown();
+
+        Thread.sleep(250);
+
+        assertEquals(executor.isTerminated(), true); 
+    }
+
 }

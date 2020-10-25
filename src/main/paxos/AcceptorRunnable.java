@@ -32,30 +32,31 @@ public class AcceptorRunnable implements Runnable {
         this.id = id;
     }
     
+    // Thread start. Ends on thread interruption
     public void run() {
-        while (true) {
+        try {
+            receiveMessages();
+        } catch (InterruptedException e) {
+            // Gracefull shutdown
+        }
+    }
+
+    // Receiving messages
+    private void receiveMessages() throws InterruptedException {
+        while (!Thread.interrupted()) {
             // Pretend to fail if failure == true and clear all messages
             // While we're still using AtomicBoolean we must own the monitor
             // In order to wait
             while (failure.get()) {
                 synchronized (failure) {
-                    try {
-                        failure.wait();
-                    } catch (Exception e) {
-                    }
+                    failure.wait();
                 }
                 messages.clear();
             }
 
             String message = "";
-            try {
-                message = messages.take();
 
-            } catch (Exception e) {
-                System.err.println(e.getMessage());
-                e.printStackTrace();
-            }
-
+            message = messages.take();
             // Separate the type from message
             char type = message.charAt(0);
             message = message.substring(1);
@@ -74,8 +75,10 @@ public class AcceptorRunnable implements Runnable {
             }
                 
         }
+        
     }
 
+    // Handle a prepare request
     private void handlePrepare(String message) {
         String[] messageArr = message.split(" ");     
         int from = Integer.parseInt(messageArr[0]);
@@ -97,6 +100,7 @@ public class AcceptorRunnable implements Runnable {
         sender.send(message, from);
     }
 
+    // Handle a proposal request
     private void handleProposal(String message) {
         String[] messageArr = message.split(" ");     
         int from = Integer.parseInt(messageArr[0]);
