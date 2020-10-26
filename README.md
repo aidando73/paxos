@@ -56,11 +56,11 @@ Where:
     ambition         ->    If true, will initially propose for themself. Otherwise will propose randomly.
 
 Note: all member entries are optional. If not present, they will take on the following default failues
-timeToPropose = -1         (Never proposes)
-timeToFail = -1            (Never fails)
-timeToRestart= -1          (Never restarts)
-responseTime = "IMMEDIATE"
-ambition = false
+    timeToPropose = -1         (Never proposes)
+    timeToFail = -1            (Never fails)
+    timeToRestart= -1          (Never restart)
+    responseTime = "IMMEDIATE"
+    ambition = false
 ```
 
 #### Design
