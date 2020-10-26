@@ -96,6 +96,16 @@ Paxos has 4 different types of messages corresponding to 4 particular phases. I'
 
 We are done when a proposer has received majority votes.
 
+In order to increase efficiency, I've introduced two extra messages that can be sent:
+
+    1. Preparenack
+    
+    If a reciever cannot promise such a prepare request.
+
+    2. Proposalnack
+
+    If a reciever cannot accept such a proposal request.
+
 ### Message Specification
 > Note: understanding of the messages are only required to understand the code.
 
