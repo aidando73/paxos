@@ -48,6 +48,7 @@ public class MemberRunnable implements Runnable {
         this.timeToFail = timeToFail;
         this.timeToRestart = timeToRestart;
         this.id = id;
+        this.N = N;
 
         // Create proposer and acceptor threads
         eClient = new EmailClient(port, id);
@@ -152,14 +153,13 @@ public class MemberRunnable implements Runnable {
     private void gracefulShutdown() {
         acceptor.interrupt();     
         proposer.interrupt();     
-        // while (acceptor.getState() != Thread.State.TERMINATED && proposer.getState() != Thread.State.TERMINATED) {
-        //     try {
-        //         acceptor.join();
-        //         proposer.join();
-        //     } catch (Exception e) {
-        //     }
-        // }
-
-        System.out.println(String.format("Member %d is now shutting down", id));
+        while (acceptor.getState() != Thread.State.TERMINATED && proposer.getState() != Thread.State.TERMINATED) {
+            try {
+                acceptor.join();
+                proposer.join();
+            } catch (Exception e) {
+            }
+        }
+        System.out.println(String.format("Member %d Shutting down", id));
     }
 }

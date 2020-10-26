@@ -131,15 +131,11 @@ public class ProposerRunnable implements Runnable {
     }
 
     // Handling actions on entry to a state
-    private void next(int newState) {
+    private void next(int newState) throws InterruptedException {
         state = newState;
         switch (state) {
             case PREPARE:
-                try {
-                    Thread.sleep(timeToPropose);
-                } catch (InterruptedException e) {
-                    System.err.println(e.getMessage());
-                }
+                Thread.sleep(timeToPropose);
                 setUniqueProposal();
                 promiseSet.clear();
                 broadCastPrepare();
@@ -162,7 +158,7 @@ public class ProposerRunnable implements Runnable {
     }
 
     private int maxAcceptedId = -1;
-    private void receivePromise(String message) {
+    private void receivePromise(String message) throws InterruptedException {
         String[] messageArr = message.split(" ");
         int fromId = Integer.parseInt(messageArr[0]);
         int fromProposalId = Integer.parseInt(messageArr[1]);
@@ -198,7 +194,7 @@ public class ProposerRunnable implements Runnable {
         }
     }
 
-    private void receivePromisenack() {
+    private void receivePromisenack()  throws InterruptedException {
         switch (state) {
             case PREPARE:
                 next(PREPARE);
@@ -213,7 +209,7 @@ public class ProposerRunnable implements Runnable {
         }
     }
 
-    private void receiveAccept(String message) {
+    private void receiveAccept(String message) throws InterruptedException {
         String[] messageArr = message.split(" ");
         int fromId = Integer.parseInt(messageArr[0]);
         int fromProposalId = Integer.parseInt(messageArr[1]);
@@ -240,7 +236,7 @@ public class ProposerRunnable implements Runnable {
         }  
     }
 
-    private void receiveAcceptnack() {
+    private void receiveAcceptnack() throws InterruptedException {
         switch (state) {
             case PREPARE:
                 // do nothing
@@ -256,7 +252,7 @@ public class ProposerRunnable implements Runnable {
     }
 
     
-    private void timeout() {
+    private void timeout() throws InterruptedException {
         switch (state) {
             case PREPARE:
                 next(PREPARE);

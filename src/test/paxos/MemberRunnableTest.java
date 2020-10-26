@@ -46,10 +46,10 @@ public class MemberRunnableTest {
             if (i != 5)
                 eClients.add(new EmailClient(port, i));
         }
+        fullShutdown = new AtomicBoolean(false);
     }
 
     private void initializeMember(int timeToFail, int timeToRestart, int timeToPropose) {
-        fullShutdown = new AtomicBoolean();
 
         // Create member that:
         // has Id of 5
@@ -59,13 +59,6 @@ public class MemberRunnableTest {
         memberThread.start();
     }
 
-    @After
-    public void shutdown() throws InterruptedException {
-        fullShutdown.set(true);
-        memberThread.interrupt();
-        memberThread.join();
-    }
-
     @Test 
     public void restartsAndFails() throws InterruptedException {
         // 0.5 seconds to fail, 1 seconds to restart
@@ -73,7 +66,6 @@ public class MemberRunnableTest {
         System.out.println("0.5 seconds to fail, 1 second to restart: ");
 
         Thread.sleep(4000);
-        fullShutdown.set(true);
     }
 
     @Test 
@@ -87,43 +79,43 @@ public class MemberRunnableTest {
         }
     }
     
-    // @Test
-    // public void receivesPrepareRequest() throws InterruptedException {
-    //     initializeMember(-1, -1, 8000);
+    @Test
+    public void receivesPrepareRequest() throws InterruptedException {
+        initializeMember(-1, -1, 8000);
 
-    //     // First send a prepare for proposal 10
-    //     eClients.get(0).send(PREPARE + "0 10",5);
-    //     Thread.sleep(250);
-    //     // Then send a prepare for proposal 0
-    //     eClients.get(1).send(PREPARE + "1 0",5);
-    //     Thread.sleep(250);
-    //     // Also send a proposal for proposal 1
-    //     eClients.get(2).send(PROPOSAL + "2 1 666", 5);
+        // First send a prepare for proposal 10
+        eClients.get(0).send(PREPARE + "0 10",5);
+        Thread.sleep(250);
+        // Then send a prepare for proposal 0
+        eClients.get(1).send(PREPARE + "1 0",5);
+        Thread.sleep(250);
+        // Also send a proposal for proposal 1
+        eClients.get(2).send(PROPOSAL + "2 1 666", 5);
 
-    //     // We should receive a preparenack and proposalnack respectively
-    //     Thread.sleep(250);
+        // We should receive a preparenack and proposalnack respectively
+        Thread.sleep(250);
 
-    //     assertEquals(eClients.get(0).receive(), PROMISE + "5 10");
-    //     assertEquals(eClients.get(1).receive(), PREPARENACK + "5 0");
-    //     assertEquals(eClients.get(2).receive(), PROPOSALNACK + "5 1");
-    // }
+        assertEquals(eClients.get(0).receive(), PROMISE + "5 10");
+        assertEquals(eClients.get(1).receive(), PREPARENACK + "5 0");
+        assertEquals(eClients.get(2).receive(), PROPOSALNACK + "5 1");
+    }
 
-    // @Test
-    // public void acceptsProposals() throws InterruptedException {
-    //     initializeMember(-1, -1, 8000);
+    @Test
+    public void acceptsProposals() throws InterruptedException {
+        initializeMember(-1, -1, 8000);
         
-    //     // Send a proposal for proposalId 0
-    //     eClients.get(0).send(PROPOSAL + "0 0 500", 5);
-    //     Thread.sleep(250);
-    //     // Send a prepare for a higher proposal
-    //     eClients.get(1).send(PREPARE + "1 1 666", 5);
+        // Send a proposal for proposalId 0
+        eClients.get(0).send(PROPOSAL + "0 0 500", 5);
+        Thread.sleep(250);
+        // Send a prepare for a higher proposal
+        eClients.get(1).send(PREPARE + "1 1 666", 5);
 
-    //     Thread.sleep(250);
+        Thread.sleep(250);
 
-    //     // Should have received an accept request and an augmented promise
-    //     assertEquals(eClients.get(0).receive(), ACCEPT + "5 0");
-    //     assertEquals(eClients.get(1).receive(), PROMISE + "5 1 0 500");
-    // }
+        // Should have received an accept request and an augmented promise
+        assertEquals(eClients.get(0).receive(), ACCEPT + "5 0");
+        assertEquals(eClients.get(1).receive(), PROMISE + "5 1 0 500");
+    }
 
     @Test
     public void gracefulShutdown() throws InterruptedException {
@@ -133,56 +125,73 @@ public class MemberRunnableTest {
         memberThread.interrupt();
     }
 
+    @Test
+    public void sendProposalsIfPromisedAndDoneIfAccepted() throws InterruptedException {
+        initializeMember(-1, -1, 0);
 
-    // @Test
-    // public void sendProposalsIfPromisedAndDoneIfAccepted() throws InterruptedException {
-    //     initializeMember(-1, -1, 0);
+        Thread.sleep(250);
 
-    //     // Send an promise for the prepare
-    //     for (int i = 0; i < 19; i++) {
-    //         // Get id of eclient
-    //         int id = i;
-    //         if (i >= 5)
-    //             id++;
+        // Send an promise for the prepare
+        for (int i = 0; i < 19; i++) {
+            // Get id of eclient
+            int id = i;
+            if (i >= 5)
+                id++;
 
-    //         eClients.get(i).send(
-    //             String.format(
-    //                 "%c%d %d %d %d",
-    //                 PROMISE,
-    //                 id,
-    //                 5,
-    //                 8,
-    //                 666
-    //             )
-    //         , 5);
-    //     }
+            eClients.get(i).send(
+                String.format(
+                    "%c%d %d %d %d",
+                    PROMISE,
+                    id,
+                    5,
+                    8,
+                    666
+                )
+            , 5);
+        }
 
-    //     Thread.sleep(500);
+        Thread.sleep(500);
 
-    //     // We should receive a Proposal id = 5 and value 666
-    //     for (int i = 0; i < 19; i++) {
-    //         // Get id of eclient
-    //         int id = i;
-    //         if (i >= 5)
-    //             id++;
-    //         // Dump the prepare request
-    //         eClients.get(i).receive();
-    //         // Assert the proposal
-    //         assertEquals(eClients.get(i).receive(), PROPOSAL + "5 5 666");
+        // We should receive a Proposal id = 5 and value 666
+        for (int i = 0; i < 19; i++) {
+            // Get id of eclient
+            int id = i;
+            if (i >= 5)
+                id++;
+            // Dump the prepare request
+            eClients.get(i).receive();
+            // Assert the proposal
+            assertEquals(eClients.get(i).receive(), PROPOSAL + "5 5 666");
 
-    //         // Send back an accept request
-    //         eClients.get(i).send(
-    //             String.format(
-    //                 "%c%d %d",
-    //                 ACCEPT,
-    //                 id,
-    //                 5
-    //             )
-    //         , 5);
-    //     }
+            // Send back an accept request
+            eClients.get(i).send(
+                String.format(
+                    "%c%d %d",
+                    ACCEPT,
+                    id,
+                    5
+                )
+            , 5);
+        }
         
-    //     memberThread.join();
-    //     System.out.println(memberThread.getState().toString());
-    //     assertEquals(fullShutdown.get(), true);
-    // }
+        memberThread.join();
+        assertEquals(fullShutdown.get(), true);
+    }
+
+
+    @Test
+    public void multipleGracefuleShutdown() throws InterruptedException {
+        List<Thread> threads = new LinkedList<Thread>();
+        
+        for (int i = 0; i < 20; i++) {
+            threads.add(new Thread(new MemberRunnable(port, ResponseTime.IMMEDIATE, -1, -1, 80000, i, 20, fullShutdown, true)));
+            threads.get(i).start();
+        }
+        fullShutdown.set(true);
+        for (Thread t : threads) {
+            t.interrupt();
+            t.join();
+            assertEquals(t.getState(), Thread.State.TERMINATED);
+        }
+    }
 }

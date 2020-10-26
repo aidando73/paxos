@@ -97,9 +97,6 @@ public class EmailClientTest {
         }
     }
 
-
-
-
     private BufferedReader getReader(Socket connection) throws IOException {
         return new BufferedReader(
             new InputStreamReader(
