@@ -15,6 +15,54 @@ This is Assignment 3, a multi-threaded simulation of the Paxos Protocol as defin
 ### Getting Started
 I have submitted this entire folder to web-submission. However, in the case that there are problems. I've also included a zip file called project.zip. If all else fails, you can clone this project on https://github.com/REslim30/paxos.
 
+There is only one command you need to know:
+
+    make run
+
+This will simulate scenarios defined in **config.json**. I encourage you to toy around with different settings. config.json is defined as follows:
+```
+[
+    <scenario>,
+    <scenario>,
+    <scenario>,
+    ...
+]
+
+<scenario> =
+{
+    "name": "any string",
+    "description": "any string"
+    "members": [
+        <member>,
+        <member>,
+        <member>
+    ]
+}
+
+<member> = 
+{
+    "timeToPropose": <int>,
+    "timeToFail": <int>,
+    "timeToRestart": <int>,
+    "ambition": <boolean>,
+    "responseTime": "[IMMEDIATE|MEDIUM|LATE|NEVER]"
+}
+
+Where:
+    timeToPropose    ->    Interval in which member proposers (ms)
+    timeToFail       ->    Interval in which member proposers (ms)
+    timeToRestart    ->    Interval in which member proposers (ms)
+    responseTime     ->    responsiveness of member. Only accepts "IMMEDIATE", "MEDIUM", "LATE", "NEVER"
+    ambition         ->    If true, will initially propose for themself. Otherwise will propose randomly.
+
+Note: all member entries are optional. If not present, they will take on the following default failues
+timeToPropose = -1         (Never proposes)
+timeToFail = -1            (Never fails)
+timeToRestart= -1          (Never restarts)
+responseTime = "IMMEDIATE"
+ambition = false
+```
+
 #### Design
 The system consists of 3 main components:
 
@@ -29,12 +77,15 @@ The email server and email client talk to one another via sockets. An email clie
 A Member is where Paxos is actually implemented. They handle all the logic of Paxos, using an Email Client to contact other Members.
 
 #### Message Specification
+> Note: understanding of the messages are only required to understand the code.
+
 All messages are sent as: <email>
 
 A <email> consists of:
 
 <recipient-id>:<paxos-message>
 
+There are four <paxos-messasges>:
 
 ### Notes
 #### Specific Implementation Notes

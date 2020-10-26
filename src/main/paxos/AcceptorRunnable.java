@@ -117,7 +117,7 @@ public class AcceptorRunnable implements Runnable {
                 maxAccept = n;
                 maxAcceptValue = v;
             }
-            System.out.println(String.format("Member %d accepts proposal %d", id, n));
+            System.out.println(String.format("Member %d accepts proposal %d with value %d", id, n, v));
 
         //Send a PROPOSALNACK if we did promise
         } else {
