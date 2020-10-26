@@ -4,14 +4,14 @@
 This is Assignment 3, a multi-threaded simulation of the Paxos Protocol as defined by https://lamport.azurewebsites.net/pubs/paxos-simple.pdf. It is recommended to read this document in an markdown reader.
 
 #### Features
-- Isolated unit tests using Mockaroo and Junit.
+- Unit tests using Mockaroo and Junit.
 - Paxos Compliant
 - Members have dynamic behaviour that you can define easily via a JSON config file
-    - Message delay
-    - Time to fail
-    - Time to restart
-    - How many members
-    - ambition
+    You can define however many Member you want. For each member you can define
+        - Four profiles of response times: immediate, medium, late, never.
+        - Time to fail
+        - Time to restart
+        - ambition (whether or not to propose for themselves initially)
 
 ### Getting Started
 I have submitted this assignment a zip file called project.zip. In case of any issues with websub, you can clone this project on https://github.com/REslim30/paxos. I've included in the project.zip file the .git folder as proof that this work is mine.
@@ -125,6 +125,13 @@ There are six types of {paxos-messasge}:
     {preparenack-message} = PREPARENACKCHAR{from-id} {proposal-id}
     {proposalnack-message} = PROPOSALNACKCHAR{from-id} {proposal-id}
 ```
+
+### Tests
+All tests are included in the `src/test` folder. The following commands run them:
+
+    make test_eserver            ->      tests for email server
+    make test_eclient            ->      tests for email client
+    make test_paxos              ->      tests for paxos implementation
 
 ### Notes
 - The distiguished learner is the proposer that issued the proposal.
