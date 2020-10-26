@@ -56,3 +56,10 @@ compile_eclient: src/main/eclient/*.java
 
 compile_driver: src/main/driver/*.java
 	@$(compile) $?
+
+zip: clean
+	zip -r project.zip Makefile README.md designs src target config.json .git
+
+clean:
+	rm -r --force target/classes/*
+	rm -r --force target/test-classes/*

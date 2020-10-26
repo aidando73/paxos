@@ -11,9 +11,10 @@ This is Assignment 3, a multi-threaded simulation of the Paxos Protocol as defin
     - Time to fail
     - Time to restart
     - How many members
+    - ambition
 
 ### Getting Started
-I have submitted this entire folder to web-submission. However, in the case that there are problems. I've also included a zip file called project.zip. If all else fails, you can clone this project on https://github.com/REslim30/paxos.
+I have submitted this assignment a zip file called project.zip. In case of any issues with websub, you can clone this project on https://github.com/REslim30/paxos. I've included in the project.zip file the .git folder as proof that this work is mine.
 
 There is only one command you need to know:
 
@@ -62,6 +63,8 @@ Note: all member entries are optional. If not present, they will take on the fol
     responseTime = "IMMEDIATE"
     ambition = false
 ```
+
+Currently, **config.json** includes the two scenarios defined in the assignment specification.
 
 ## Design
 The system consists of 3 main components:
