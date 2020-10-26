@@ -63,7 +63,7 @@ Note: all member entries are optional. If not present, they will take on the fol
     ambition = false
 ```
 
-#### Design
+## Design
 The system consists of 3 main components:
 
     1. Email Server.
@@ -75,6 +75,14 @@ You can see how these components interact in designs/highLevel.jpg
 The email server and email client talk to one another via sockets. An email client can send messages to other email clients by simply attaching their id in the message. The email server redirects messages to the correct recipient.
 
 A Member is where Paxos is actually implemented. They handle all the logic of Paxos, using an Email Client to contact other Members.
+
+### Terminology
+Paxos has 4 different types of messages corresponding to 4 particular phases. I've unofficially given them names:
+    1. Prepare
+`Member tries to request a promise that receiver will not accept any request with proposal-id higher than the prepare request proposal-id`
+    2. Promise
+    3. Proposal
+    4. Accept
 
 ### Message Specification
 > Note: understanding of the messages are only required to understand the code.
@@ -89,8 +97,8 @@ There are six types of {paxos-messasge}:
     {promise-message} = PROMISECHAR{from-id} {proposal-id} [{max-accepted-proposal-id} {max-accepted-proposal-value}]
     {proposal-message} = PROPOSALCHAR{from-id} {proposal-id} {proposal-value}
     {accept-message} = ACCEPTCHAR{from-id} {proposal-id}
-    {preparenack-message} = PREPARENACK{from-id} {proposal-id}
-    {proposalnack-message} = PROPOSALNACK{from-id} {proposal-id}
+    {preparenack-message} = PREPARENACKCHAR{from-id} {proposal-id}
+    {proposalnack-message} = PROPOSALNACKCHAR{from-id} {proposal-id}
 ```
 
 ### Notes
