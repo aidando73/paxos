@@ -79,10 +79,22 @@ A Member is where Paxos is actually implemented. They handle all the logic of Pa
 ### Terminology
 Paxos has 4 different types of messages corresponding to 4 particular phases. I've unofficially given them names:
     1. Prepare
-`Member tries to request a promise that receiver will not accept any request with proposal-id higher than the prepare request proposal-id`
+
+    Member tries to request a promise that receiver will not accept any request with proposal-id higher than the prepare request proposal-id
+
     2. Promise
+
+    In response to a prepare request, member promises sender that they will not accept any request with proposal-id higher than the prepare request proposal-id.    
+
     3. Proposal
+
+    In response to receiving a majority of promises among acceptors. Member tries to send a proposal in hopes for a majority of accepts.
+
     4. Accept
+
+    In response to a proposal, Member accepts proposal only if they have not promised otherwise.
+
+We are done when a proposer has received majority votes.
 
 ### Message Specification
 > Note: understanding of the messages are only required to understand the code.
