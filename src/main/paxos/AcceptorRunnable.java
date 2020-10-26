@@ -93,9 +93,11 @@ public class AcceptorRunnable implements Runnable {
             } else {
                 message = String.format("%c%d %d %d %d", PROMISE, id, n, maxAccept, maxAcceptValue);
             }
+            System.out.println(String.format("Member %d promises proposal %d", id, n));
             maxPromise = n;
         } else {
             message = String.format("%c%d %d", PREPARENACK, id, n);
+            System.out.println(String.format("Member %d cannot promise proposal %d", id, n));
         }
         sender.send(message, from);
     }
@@ -108,16 +110,19 @@ public class AcceptorRunnable implements Runnable {
         int v = Integer.parseInt(messageArr[2]);
 
         //Send accept if we haven't promised
-        if (maxPromise < n) {
+        if (maxPromise <= n) {
             sender.send(String.format("%c%d %d", ACCEPT, id, n), from);
             // Set new accepted max if required
             if (maxAccept < n) {
                 maxAccept = n;
                 maxAcceptValue = v;
             }
+            System.out.println(String.format("Member %d accepts proposal %d", id, n));
+
         //Send a PROPOSALNACK if we did promise
         } else {
             sender.send(String.format("%c%d %d", PROPOSALNACK, id, n), from);
+            System.out.println(String.format("Member %d cannot accept proposal %d", id, n));
         }
     }
 }

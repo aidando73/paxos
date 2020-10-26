@@ -24,9 +24,11 @@ public class PaxosDriver {
         for (Object obj : arr) {
             runScenario((JSONObject)obj);
         }
+        System.exit(0);
     }
 
     private static void runScenario(JSONObject scenario) {
+        System.out.println("");
         System.out.println("NEW SCENARIO: " + scenario.getString("name"));
         System.out.println("\t" + scenario.getString("description"));
 
@@ -40,11 +42,31 @@ public class PaxosDriver {
         eserver.start();
 
         //Create members
-        List<Thread> memberThreads = createMembers(members, port);
+        AtomicBoolean fullShutdown = new AtomicBoolean(false);
+        List<Thread> memberThreads = createMembers(members, port, fullShutdown);
+
+        //Start members
+        System.out.println("VOTING BEGIN:");
+        for (Thread th : memberThreads) {
+            th.start();
+        }
+
+        // Wait until fullShutdown is true
+        synchronized (fullShutdown) {
+            while (!fullShutdown.get()) {
+                try {
+                    fullShutdown.wait();
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        }
 
         //Wait for members
         for (Thread th : memberThreads) {
             try {
+                th.interrupt();
                 th.join();
             } catch (Exception e) {
                 System.err.println(e.getMessage());
@@ -52,18 +74,17 @@ public class PaxosDriver {
                 System.exit(-1);
             }
         }
+
     }
 
     // Creates member threads and starts them
-    private static List<Thread> createMembers(JSONArray members, int port) {
+    private static List<Thread> createMembers(JSONArray members, int port, AtomicBoolean fullShutdown) {
         List<Thread> memberThreads = new ArrayList<Thread>();
-        AtomicBoolean fullShutdown = new AtomicBoolean(false);
         int id = 0;
         int N = members.length();
         for (Object obj : members) {
             Thread member = createMember((JSONObject)obj, id++, N, port, fullShutdown);
             memberThreads.add(member);
-            member.start();
         }
 
         return memberThreads;

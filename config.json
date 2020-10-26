@@ -1,7 +1,7 @@
 [
   {
     "name": "Two Proposers",
-    "description": "Two councillors send voting proposals for themselves at the same time",
+    "description": "(Assignment Scenario)Two councillors send voting proposals for themselves at the same time. All councillors have IMMEDIATE responses",
     "members": [
       {
         "timeToPropose": 0,
@@ -31,6 +31,49 @@
       },
       {
         "timeToPropose": -1
+      }
+    ]
+  },
+  {
+    "name": "All Proposers",
+    "description": "(Assignment scenario) M0, M1, M3 send voting proposals for themselves. M0 is never unavailable and response immediately. M1 is available for short-burts of time and has LATE replies. M2 becomes unavailable indefinitely but while he is available has MEDIUM replies. All other councillors have varied responses but will not propose any value. These members never become unavailable.",
+    "members": [
+      {
+        "timeToPropose": 250,
+        "ambition": true,
+        "responseTime": "IMMEDIATE"
+      },
+      {
+        "timeToPropose": 1900,
+        "ambition": true,
+        "timeToFail": 2000,
+        "timeToRestart": 4000,
+        "repsonseTime": "LATE"
+      },
+      {
+        "timeToPropose": 250,
+        "ambition": true,
+        "timeToFail": 4000,
+        "timeToRestart": -1,
+        "responseTime": "MEDIUM"
+      },
+      {
+        "responseTime": "NEVER"
+      },
+      {
+        "responseTime": "LATE"
+      },
+      {
+        "responseTime": "MEDIUM"
+      },
+      {
+        "responseTime": "LATE"
+      },
+      {
+        "responseTime": "IMMEDIATE"
+      },
+      {
+        "responseTime": "MEDIUM"
       }
     ]
   }

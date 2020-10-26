@@ -136,7 +136,9 @@ public class ProposerRunnable implements Runnable {
         switch (state) {
             case PREPARE:
                 // Only propose if timeToPropose is positive
-                if (timeToPropose > 0) {
+                if (timeToPropose >= 0) {
+                    // Also randomize sleep times a little in order to reduce
+                    // likelihood of livelock
                     Thread.sleep(timeToPropose);
                     setUniqueProposal();
                     promiseSet.clear();
@@ -150,8 +152,12 @@ public class ProposerRunnable implements Runnable {
                 return;
 
             case DONE:
-                System.out.println("VALUE HAS BEEN CHOSEN: " + Integer.toString(proposalValue));
-                shutdown.set(true);
+                System.out.println("PROPOSAL HAS BEEN CHOSEN: " + Long.toString(proposalId));
+                System.out.println("NEW PRESIDENT IS: " + Integer.toString(proposalValue));
+                synchronized (shutdown) {
+                    shutdown.set(true);
+                    shutdown.notifyAll();
+                }
                 parentThread.interrupt();
                 return;
 
@@ -284,6 +290,7 @@ public class ProposerRunnable implements Runnable {
 
     //Broadcasts a prepare request to all mebers
     private void broadCastPrepare() {
+        System.out.println(String.format("Member %d broadcasting prepare: %d for value %d", id, proposalId, proposalValue));
          for (int recipient = 0; recipient < N; recipient++) {
              if (recipient != id)
                  sender.send(String.format("%c%d %d", MessageCodes.PREPARE, id, proposalId), recipient);
@@ -292,6 +299,7 @@ public class ProposerRunnable implements Runnable {
 
     //Broadcasts a proposal request to all members
     private void broadCastProposal() {
+        System.out.println(String.format("Member %d broadcasting proposal: %d for value %d", id, proposalId, proposalValue));
          for (int recipient = 0; recipient < N; recipient++) {
              if (recipient != id)
                  sender.send(String.format("%c%d %d %d", MessageCodes.PROPOSAL, id, proposalId, proposalValue), recipient);
