@@ -50,8 +50,8 @@ This will simulate scenarios defined in **config.json**. I encourage you to toy 
 
 Where:
     timeToPropose    ->    Interval in which member proposers (ms)
-    timeToFail       ->    Interval in which member proposers (ms)
-    timeToRestart    ->    Interval in which member proposers (ms)
+    timeToFail       ->    Interval in which member becomes unavailable (ms)
+    timeToRestart    ->    Interval in which member becomes available after becoming unavailable (ms)
     responseTime     ->    responsiveness of member. Only accepts "IMMEDIATE", "MEDIUM", "LATE", "NEVER"
     ambition         ->    If true, will initially propose for themself. Otherwise will propose randomly.
 
@@ -76,27 +76,33 @@ The email server and email client talk to one another via sockets. An email clie
 
 A Member is where Paxos is actually implemented. They handle all the logic of Paxos, using an Email Client to contact other Members.
 
-#### Message Specification
+### Message Specification
 > Note: understanding of the messages are only required to understand the code.
 
-All messages are sent as: <email>
+```
+All messages are sent as: {email}
 
-A <email> consists of:
+{email} = {recipient-id}:{paxos-message}
 
-<recipient-id>:<paxos-message>
-
-There are four <paxos-messasges>:
+There are six types of {paxos-messasge}:
+    {prepare-message} = PREPARECHAR{from-id} {proposal-id}
+    {promise-message} = PROMISECHAR{from-id} {proposal-id} [{max-accepted-proposal-id} {max-accepted-proposal-value}]
+    {proposal-message} = PROPOSALCHAR{from-id} {proposal-id} {proposal-value}
+    {accept-message} = ACCEPTCHAR{from-id} {proposal-id}
+    {preparenack-message} = PREPARENACK{from-id} {proposal-id}
+    {proposalnack-message} = PROPOSALNACK{from-id} {proposal-id}
+```
 
 ### Notes
-#### Specific Implementation Notes
 - The distiguished learner is the proposer that issued the proposal.
-    - Since many nodes might ignore messages, or be unavailable, there needs to be a separate protocol for when a distinguished learner tries to communicate with all other nodes in the system about the chosen value. As this assignment is about Paxos, I've decided that this is out of scope. Once nodes have chosen a value, there is no need to run Paxos any further and as such the algorithm terminates. Of course, in the real world we'd need a way of having all learner nodes learn the value and restarting paxos for the next value.
+- Since many nodes might ignore messages, or be unavailable, there needs to be a separate protocol for when a distinguished learner tries to communicate with all other nodes in the system about the chosen value. As this assignment is about Paxos, I've decided that this is out of scope. Once nodes have chosen a value, there is no need to run Paxos any further and as such the algorithm terminates. Of course, in the real world we'd need a way of having all learner nodes learn the value and restarting paxos for the next value.
 - All members are simultaneously proposers, and acceptors.
 - Non-byzantine, asynchronous message model:
     - Nodes can fail, operate at arbitrary speed, or can restart.
-    - Extra: Messages can be duplicated, take arbitrarily long to be delivered and lost.
+    - Messages can be duplicated, take arbitrarily long to be delivered and lost.
 - Crashes will be simulated **not** actually executed. Truly crashing a thread and restarting the connection is out of scope for this assignment. We will instead simulate the behaviour of a node that does crash by:
     - Ignoring all messages that were sent during failure.
+    - Stop making prepare/proposal requests during failure.
 - Proposals/Prepare are broadcast.
 - Acceptors can send promisenack or acceptnack messages on:
     - receiving a prepare request with proposal id less than the latest promise's proposal id.
