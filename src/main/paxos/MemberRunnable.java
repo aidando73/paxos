@@ -15,12 +15,14 @@ import static main.paxos.MessageCodes.*;
 public class MemberRunnable implements Runnable {
     //Time for member to crash
     private int timeToFail;
+    private int timeToPropose;
     //Time for member to restart after crash
     private int timeToRestart;
-    private AtomicBoolean fullShutdown;
     private int id;
+    private int N;
 
     private EmailClient eClient;
+    private DelayedMessageExecutor sender;
 
     // Acceptor and Proposer management variables
     private Thread proposer;
@@ -28,7 +30,8 @@ public class MemberRunnable implements Runnable {
     private BlockingQueue<String> proposerMessages;
     private BlockingQueue<String> acceptorMessages;
     private AtomicBoolean failure;
-    private AtomicBoolean shutdown;
+    private AtomicBoolean fullShutdown;
+    private boolean ambition;
 
     public MemberRunnable(
         int port,
@@ -48,19 +51,20 @@ public class MemberRunnable implements Runnable {
 
         // Create proposer and acceptor threads
         eClient = new EmailClient(port, id);
-        DelayedMessageExecutor sender = new DelayedMessageExecutor(eClient, responseTime);
+        sender = new DelayedMessageExecutor(eClient, responseTime);
         failure = new AtomicBoolean(false);
-        shutdown = new AtomicBoolean(false);
         this.fullShutdown = fullShutdown;
         proposerMessages = new LinkedBlockingQueue<String>();
         acceptorMessages = new LinkedBlockingQueue<String>();
-
-        proposer = new Thread(new ProposerRunnable(N, id, timeToPropose, proposerMessages, sender, failure, ambition, shutdown));
         acceptor = new Thread(new AcceptorRunnable(acceptorMessages, sender, failure, id));
+        this.ambition = ambition;
+        this.timeToPropose = timeToPropose;
+
 
         // If ResponseTime is Never, then it's as if we fail all the time
         if (responseTime == ResponseTime.NEVER)
             timeToFail = 0;
+
     }
 
     public void run() {
@@ -69,6 +73,7 @@ public class MemberRunnable implements Runnable {
             return;
 
         //Start both threads
+        proposer = new Thread(new ProposerRunnable(N, id, timeToPropose, proposerMessages, sender, failure, ambition, fullShutdown, Thread.currentThread()));
         proposer.start();
         acceptor.start();
 
@@ -77,27 +82,9 @@ public class MemberRunnable implements Runnable {
         // Only set a timer if timeToFail is positive
         if (timeToFail > 0)
             timer.setTimeout(Thread.currentThread(), timeToFail);
-        while (!fullShutdown.get() && !shutdown.get()) {
-            // Calculate failure
-            // If current thread has been interrupted. 
-            // Then our timer has gone off
-            // Toggle failure
-            if (Thread.interrupted()) {
-                synchronized (failure) {
-                    failure.set(!failure.get());
-                    // If we're in state of failure, set a timer for restart
-                    if (failure.get() ==  true) {
-                        timer.setTimeout(Thread.currentThread(), timeToRestart);
-                        System.out.println(String.format("Member %d is now unavailable", id));
 
-                    // If we're in state of liveness, set a timer for failure
-                    } else {
-                        timer.setTimeout(Thread.currentThread(), timeToFail);
-                        System.out.println(String.format("Member %d is now back", id));
-                    }
-                }
-            }
-
+        while (!fullShutdown.get()) {
+            handleFailure(timer);
 
             try {
                 multiplexMessages();
@@ -106,9 +93,39 @@ public class MemberRunnable implements Runnable {
                 Thread.currentThread().interrupt();
             }
         }
+
+        gracefulShutdown();
     }
 
-    public void multiplexMessages() throws InterruptedException {
+    // Calculates whether we're in a state of failure or not
+    private void handleFailure(Timer timer) {
+        // Calculate failure
+        // If current thread has been interrupted. 
+        // Then our timer has gone off
+        // Toggle failure
+        if (Thread.interrupted()) {
+            synchronized (failure) {
+                failure.set(!failure.get());
+                // If we're in state of failure, set a timer for restart
+                // Only if timeToRestart is non-negative
+                if (failure.get() ==  true) {
+                    if (timeToRestart > 0) {
+                        timer.setTimeout(Thread.currentThread(), timeToRestart);
+                        System.out.println(String.format("Member %d is now unavailable", id));
+                    }
+                // If we're in state of liveness, set a timer for failure
+                } else {
+                    // Other threads have been waiting so we need to notify
+                    failure.notifyAll();
+                    timer.setTimeout(Thread.currentThread(), timeToFail);
+                    System.out.println(String.format("Member %d is now back", id));
+                }
+            }
+        }
+        
+    }
+
+    private void multiplexMessages() throws InterruptedException {
         String message = eClient.receive();      
         char type = message.charAt(0);
 
@@ -130,5 +147,19 @@ public class MemberRunnable implements Runnable {
         }
 
     }
-    
+
+    // Handles graceful shutdown of threads
+    private void gracefulShutdown() {
+        acceptor.interrupt();     
+        proposer.interrupt();     
+        // while (acceptor.getState() != Thread.State.TERMINATED && proposer.getState() != Thread.State.TERMINATED) {
+        //     try {
+        //         acceptor.join();
+        //         proposer.join();
+        //     } catch (Exception e) {
+        //     }
+        // }
+
+        System.out.println(String.format("Member %d is now shutting down", id));
+    }
 }

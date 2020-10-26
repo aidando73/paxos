@@ -30,6 +30,7 @@ public class ProposerRunnable implements Runnable {
     private final int timeToPropose;
     private final AtomicBoolean failure;
     private final AtomicBoolean shutdown;
+    private final Thread parentThread;
 
     // Mealy Moore FSM state variables
     private static final int PREPARE = 0;
@@ -46,7 +47,8 @@ public class ProposerRunnable implements Runnable {
         DelayedMessageExecutor sender, 
         AtomicBoolean failure, 
         boolean ambition,
-        AtomicBoolean shutdown
+        AtomicBoolean shutdown,
+        Thread parentThread
     ) {
         this.N = N;
         this.id = id;
@@ -55,6 +57,7 @@ public class ProposerRunnable implements Runnable {
         this.sender = sender;
         this.failure = failure;
         this.shutdown = shutdown;
+        this.parentThread = parentThread;
 
         // If Proposer is ambitious he will initially choose himself as the value
         // Otherwise he will choose randomly
@@ -150,6 +153,7 @@ public class ProposerRunnable implements Runnable {
             case DONE:
                 System.out.println("VALUE HAS BEEN CHOSEN: " + Integer.toString(proposalValue));
                 shutdown.set(true);
+                parentThread.interrupt();
                 return;
 
             default:
