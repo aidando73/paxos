@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Two Proposers",
+    "description": "Two councillors send voting proposals for themselves at the same time",
+    "members": [
+      {
+        "timeToPropose": 0,
+        "ambition": true
+      },
+      {
+        "timeToPropose": 0,
+        "ambition": true
+      },
+      {
+        "timeToPropose": -1
+      },
+      {
+        "timeToPropose": -1
+      },
+      {
+        "timeToPropose": -1
+      },
+      {
+        "timeToPropose": -1
+      },
+      {
+        "timeToPropose": -1
+      },
+      {
+        "timeToPropose": -1
+      },
+      {
+        "timeToPropose": -1
+      }
+    ]
+  }
+]
