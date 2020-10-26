@@ -135,10 +135,13 @@ public class ProposerRunnable implements Runnable {
         state = newState;
         switch (state) {
             case PREPARE:
-                Thread.sleep(timeToPropose);
-                setUniqueProposal();
-                promiseSet.clear();
-                broadCastPrepare();
+                // Only propose if timeToPropose is positive
+                if (timeToPropose > 0) {
+                    Thread.sleep(timeToPropose);
+                    setUniqueProposal();
+                    promiseSet.clear();
+                    broadCastPrepare();
+                }
                 return;
 
             case PROPOSAL:

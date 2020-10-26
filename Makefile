@@ -4,7 +4,7 @@ run=java $(class_flag)
 
 
 # *** Main API ***
-run: compile_driver
+run: compile_driver compile_paxos compile_eserver compile_eclient
 	@$(run) main.driver.PaxosDriver $(shell pwd)/config.json
 
 

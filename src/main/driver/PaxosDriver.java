@@ -7,6 +7,7 @@ import java.nio.file.*;
 import java.io.IOException;
 import java.util.*;
 import java.net.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.json.*;
 
@@ -35,20 +36,41 @@ public class PaxosDriver {
     private static void simulateVoting(JSONArray members) {
         // Start email server
         int port = getAvailablePort();
-        EmailServer eserver = new EmailServer(port);
+        Thread eserver = new Thread(new EmailServer(port));
+        eserver.start();
 
         //Create members
-        List<Thread> memberThreads = new ArrayList<Thread>();
-        int id = 0;
-        int N = members.length();
-        for (Object obj : members) {
-            Thread member = createMember((JSONObject)obj, id++, N);
-            memberThreads.add(member);
+        List<Thread> memberThreads = createMembers(members, port);
+
+        //Wait for members
+        for (Thread th : memberThreads) {
+            try {
+                th.join();
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+                e.printStackTrace();
+                System.exit(-1);
+            }
         }
     }
 
+    // Creates member threads and starts them
+    private static List<Thread> createMembers(JSONArray members, int port) {
+        List<Thread> memberThreads = new ArrayList<Thread>();
+        AtomicBoolean fullShutdown = new AtomicBoolean(false);
+        int id = 0;
+        int N = members.length();
+        for (Object obj : members) {
+            Thread member = createMember((JSONObject)obj, id++, N, port, fullShutdown);
+            memberThreads.add(member);
+            member.start();
+        }
+
+        return memberThreads;
+    }
+
     // Create a member thread according to the config.json spec
-    private static Thread createMember(JSONObject member, int id, int N) {
+    private static Thread createMember(JSONObject member, int id, int N, int port, AtomicBoolean fullShutdown) {
         // Get proposal interval
         int timeToPropose = member.isNull("timeToPropose") ?
             -1 : member.getInt("timeToPropose");
@@ -76,7 +98,7 @@ public class PaxosDriver {
         System.out.println("\tambition: " + Boolean.toString(ambition));
         System.out.println("\tresponseTime: " + ResponseTime.IMMEDIATE.toString());
 
-        return new Thread();
+        return new Thread(new MemberRunnable(port, responseTime, timeToFail, timeToRestart, timeToPropose, id, N, fullShutdown, ambition));
     }
 
     // Get an available port
