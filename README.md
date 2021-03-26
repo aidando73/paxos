@@ -1,7 +1,7 @@
 # Assignment 3 - Paxos Protocol
 ###### a1742494 Huy Gia Do Vu
 
-This is Assignment 3, a multi-threaded simulation of the Paxos Protocol as defined by https://lamport.azurewebsites.net/pubs/paxos-simple.pdf. It is recommended to read this document in an markdown reader.
+This is Assignment 3, a multi-threaded simulation of the Paxos Protocol as defined by [Paxos Made Simple](https://lamport.azurewebsites.net/pubs/paxos-simple.pdf).
 
 #### Features
 - Unit tests using Mockaroo and Junit.
